@@ -1,6 +1,6 @@
 {
     "name": "sunkangchina/think-filesystem",
-    "description": "The ThinkPHP6.1 Filesystem Package",
+    "description": "The ThinkPHP8.0 Filesystem Package league/flysystem ^3.0",
     "type": "library",
     "license": "Apache-2.0",
     "authors": [
