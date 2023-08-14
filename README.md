@@ -1,5 +1,7 @@
-# think-filesystem for ThinkPHP6.1
+# think-filesystem 
+
+使用 `league/flysystem ^3.0`
 
 ## 安装
 
-> composer require topthink/think-filesystem
+> composer require sunkangchina/think-filesystem

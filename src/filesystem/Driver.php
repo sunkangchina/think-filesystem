@@ -12,10 +12,7 @@ declare (strict_types = 1);
 
 namespace think\filesystem;
 
-use League\Flysystem\AdapterInterface;
-use League\Flysystem\Adapter\AbstractAdapter;
-use League\Flysystem\Cached\CachedAdapter;
-use League\Flysystem\Cached\Storage\Memory as MemoryStore;
+use League\Flysystem\FilesystemAdapter; 
 use League\Flysystem\Filesystem;
 use RuntimeException;
 use think\Cache;
@@ -49,28 +46,12 @@ abstract class Driver
         $adapter          = $this->createAdapter();
         $this->filesystem = $this->createFilesystem($adapter);
     }
+ 
 
-    protected function createCacheStore($config)
-    {
-        if (true === $config) {
-            return new MemoryStore;
-        }
+    abstract protected function createAdapter(): FilesystemAdapter;
 
-        return new CacheStore(
-            $this->cache->store($config['store']),
-            $config['prefix'] ?? 'flysystem',
-            $config['expire'] ?? null
-        );
-    }
-
-    abstract protected function createAdapter(): AdapterInterface;
-
-    protected function createFilesystem(AdapterInterface $adapter): Filesystem
-    {
-        if (!empty($this->config['cache'])) {
-            $adapter = new CachedAdapter($adapter, $this->createCacheStore($this->config['cache']));
-        }
-
+    protected function createFilesystem(FilesystemAdapter $adapter): Filesystem
+    { 
         $config = array_intersect_key($this->config, array_flip(['visibility', 'disable_asserts', 'url']));
 
         return new Filesystem($adapter, $config);
@@ -85,7 +66,7 @@ abstract class Driver
     {
         $adapter = $this->filesystem->getAdapter();
 
-        if ($adapter instanceof AbstractAdapter) {
+        if ($adapter instanceof FilesystemAdapter) {
             return $adapter->applyPathPrefix($path);
         }
 
@@ -126,15 +107,12 @@ abstract class Driver
     public function putFileAs(string $path, File $file, string $name, array $options = [])
     {
         $stream = fopen($file->getRealPath(), 'r');
-        $path   = trim($path . '/' . $name, '/');
-
-        $result = $this->putStream($path, $stream, $options);
-
+        $path   = trim($path . '/' . $name, '/'); 
+        $result = $this->writeStream($path, $stream, $options); 
         if (is_resource($stream)) {
             fclose($stream);
         }
-
-        return $result ? $path : false;
+        return $path;
     }
 
     public function __call($method, $parameters)

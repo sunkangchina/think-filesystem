@@ -12,9 +12,10 @@ declare (strict_types = 1);
 
 namespace think\filesystem\driver;
 
-use League\Flysystem\AdapterInterface;
-use League\Flysystem\Adapter\Local as LocalAdapter;
+use League\Flysystem\FilesystemAdapter;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 use think\filesystem\Driver;
+use League\Flysystem\UnixVisibility\PortableVisibilityConverter;
 
 class Local extends Driver
 {
@@ -26,19 +27,30 @@ class Local extends Driver
         'root' => '',
     ];
 
-    protected function createAdapter(): AdapterInterface
+    protected function createAdapter(): FilesystemAdapter
     {
-        $permissions = $this->config['permissions'] ?? [];
+        $permissions = $this->config['permissions'] ?? [
+            'file' => [
+                'public'  => 0640,
+                'private' => 0604,
+            ],
+            'dir' => [
+                'public' => 0740,
+                'private' => 7604,
+            ],
+        ];
 
         $links = ($this->config['links'] ?? null) === 'skip'
-        ? LocalAdapter::SKIP_LINKS
-        : LocalAdapter::DISALLOW_LINKS;
-
-        return new LocalAdapter(
+        ? LocalFilesystemAdapter::SKIP_LINKS
+        : LocalFilesystemAdapter::DISALLOW_LINKS;  
+        if($permissions){ 
+            $permissions = PortableVisibilityConverter::fromArray($permissions);
+        }
+        return new LocalFilesystemAdapter(
             $this->config['root'],
+            $permissions,
             LOCK_EX,
-            $links,
-            $permissions
+            $links, 
         );
     }
 
